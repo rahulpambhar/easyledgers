@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "./generated/base"
+  previewFeatures = ["fullTextSearch"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Action {
+  INSERT
+  UPDATE
+  DELETE
+  CANCEL
+}
+
+enum Type {
+  SuperAdmin
+  Admin
+  User
+}
+
+model Users {
+  id            Int             @id @default(autoincrement())
+  type          Type            @default(Admin)
+  name          String
+  email         String
+  password      String
+  gcode         String
+  isActive      Boolean         @default(true)
+  isBlock       Boolean         @default(false)
+  isDelete      Boolean         @default(false)
+  createAt      DateTime        @default(now())
+  createBy      Int             @default(0)
+  updateAt      DateTime        @default(now()) @updatedAt
+  updateBy      Int             @default(0)
+  LoginActivity LoginActivity[]
+
+  @@unique([email])
+}
+
+model LoginActivity {
+  id          Int      @id @default(autoincrement())
+  user        Users    @relation(fields: [userId], references: [id])
+  userId      Int
+  loggedOut   Boolean  @default(false)
+  loggedInAt  DateTime @default(now())
+  loggedOutAt DateTime @default(now())
+  ipAddress   String
+  userAgent   String
+  token       String
+  isExpired   Boolean  @default(false)
+
+  @@index([userId])
+  @@index([token])
+  @@index([isExpired])
+  @@index([userId, isExpired])
+}
+
+model Company {
+  id             Int      @id @default(autoincrement())
+  name           String
+  printName      String?
+  financialFrom  DateTime @db.Date
+  financialTo    DateTime @db.Date
+  companyType    String?
+  businessType   String?
+  legalPerson    String?
+  phoneNumber    String?
+  AltPhoneNumber String?
+  email          String?
+  address        String?
+  state          String?
+  city           String?
+  pincode        Int?
+
+  isGst      Boolean   @default(false)
+  gstNo      String?
+  gstRegDate DateTime? @db.Date
+  gstRegType String?
+
+  isTcs       Boolean @default(false)
+  isInventory Boolean @default(true)
+
+  isTds     Boolean @default(false)
+  tanNumber String?
+  tdsPer    Decimal @default(0) @db.Decimal(19, 2)
+
+  crn     String?
+  cin     String?
+  iec     String?
+  msme    String?
+  lutBond String?
+  pancard String?
+
+  logo       String?
+  attachment String?
+  sign       String?
+
+  years CompanyDB[]
+
+  isDelete Boolean  @default(false)
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+
+  @@index([id])
+}
+
+model CompanyDB {
+  id Int @id @default(autoincrement())
+
+  company   Company @relation(fields: [companyId], references: [id])
+  companyId Int
+
+  year    String
+  db_name String
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+
+  @@index([companyId])
+}
+
+model state {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  code     Int     @unique @default(0)
+  isActive Boolean @default(true)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+  city     city[]
+
+  @@index([name])
+  @@index([isActive])
+  @@index([name, isActive])
+}
+
+model city {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  state    state   @relation(fields: [state_id], references: [id])
+  state_id Int
+  isActive Boolean @default(true)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  @@index([name])
+  @@index([isActive])
+  @@index([name, isActive])
+}
+
+model activityLog {
+  id       Int      @id @default(autoincrement())
+  action   Action
+  table    String
+  body     Json
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+
+  @@index([action])
+  @@index([createBy])
+}

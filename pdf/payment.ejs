@@ -1,0 +1,654 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap"
+      rel="stylesheet" />
+    <style>
+      * {
+        font-family: "Outfit", sans-serif;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div style="width: 100%; border: 2px solid #000; margin-bottom: 30px">
+      <table style="border: 1px solid #000; width: 100%; border-spacing: 0px">
+        <tr>
+          <td
+            colspan="4"
+            style="
+              font-size: 20px;
+              font-weight: 700;
+              color: 000000;
+              padding: 7px;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              border-bottom: 1px solid #000;
+            ">
+            <%=Estimation%>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 7px;
+              border-right: 1px solid #000;
+              border-bottom: 1px solid #000;
+            ">
+            Voucher No:
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 7px;
+              border-bottom: 1px solid #000;
+            ">
+            <%=id%>
+          </td>
+        </tr>
+
+        <tr>
+          <td
+            style="
+              width: 22%;
+              text-align: center;
+              border-right: 1px solid #000;
+              border-bottom: 1px solid #000;
+            ">
+            <img src="<%=company?.logo%>" alt="" style="width: 150px" />
+            <!-- <h5
+              style="
+                font-size: 25px;
+                font-weight: 700;
+                text-transform: capitalize;
+                margin: 0px;
+              ">
+              company logo
+            </h5> -->
+          </td>
+          <td colspan="5" style="border-bottom: 1px solid #000">
+            <table style="width: 100%; border-spacing: 0px">
+              <tr>
+                <td
+                  colspan="4"
+                  style="
+                    font-size: 17px;
+                    font-weight: 700;
+                    text-align: left;
+                    text-transform: capitalize;
+                    border-bottom: 1px solid #000000;
+                    margin: 0px;
+                    padding: 7px;
+                    border-right: 1px solid #000;
+                  ">
+                  <%=company.name%>
+                </td>
+                <td
+                  style="
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: 000000;
+                    padding: 7px;
+                    border-right: 1px solid #000;
+                    border-bottom: 1px solid #000;
+                  ">
+                  Date:
+                </td>
+                <td
+                  rowspan="1"
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    padding: 7px;
+                    border-bottom: 1px solid #000;
+                  ">
+                  <%=date%>
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  Mobile No:
+                </td>
+                <td
+                  colspan="5"
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  +91 <%=company.phoneNumber%>
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  Email:
+                </td>
+                <td
+                  colspan="5"
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  <%=company.email%>
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  GSTIN:
+                </td>
+                <td
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  <%=company.gstNo%>
+                </td>
+                <td
+                  style="
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  PAN No.:
+                </td>
+                <td
+                  colspan="3"
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  <%=company.pancard%>
+                </td>
+              </tr>
+              <tr>
+                <td
+                  style="
+                    margin: 0px;
+                    font-size: 16px;
+                    font-weight: normal;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  Address:
+                </td>
+                <td
+                  colspan="5"
+                  style="
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: 000000;
+                    color: #000;
+                    padding: 4px;
+                  ">
+                  <%=company.address%>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Payment Mode:
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            <%=referenceMode%>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Reference No.
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            <%=referenceNo%>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Date:
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+            ">
+            <% const referenceDate_ = new
+            Date(referenceDate).toISOString().split('T')[0]; %> <%=
+            referenceDate_ %>
+          </td>
+        </tr>
+        <tr>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 3px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Method of Adjustment:
+          </td>
+          <td
+            colspan="5"
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 3px solid #000;
+            ">
+            <%=methodAdjustmentType%>
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="4"
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Received From
+            <p
+              style="
+                font-size: 16px;
+                font-weight: 700;
+                color: 000000;
+                margin: 0px;
+              ">
+              <%=Accledger.name%>
+            </p>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+            ">
+            Mobile No.
+            <p
+              style="
+                font-size: 16px;
+                font-weight: 400;
+                color: 000000;
+                margin: 0px;
+              ">
+              <%=Accledger.phoneNumber%>
+            </p>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+            ">
+            Email
+            <p
+              style="
+                font-size: 16px;
+                font-weight: 400;
+                color: 000000;
+                margin: 0px;
+              ">
+              <%=Accledger.email%>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="2"
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+            ">
+            Description
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            Date
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            amount
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            Due amount
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            payment
+          </td>
+        </tr>
+
+        <% paymentAgainst.forEach((item, index) => { %>
+        <tr>
+          <td
+            colspan="2"
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+            ">
+            <%=item.id%>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            <% const dateString = new
+            Date(item.date).toISOString().split('T')[0]; %> <%= dateString %>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            <%= item.netAmount %>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            <%= item.dueAmount %>
+          </td>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: normal;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              text-transform: uppercase;
+              text-align: center;
+            ">
+            <%= item.amount %>
+          </td>
+        </tr>
+        <% }); %>
+        <tr>
+          <td
+            colspan="4"
+            rowspan="2"
+            style="
+              font-size: 16px;
+              font-weight: 600;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+              border-right: 1px solid #000;
+              border-top: 2px solid #000;
+            ">
+            Narration/Note:
+            <p
+              style="
+                font-size: 16px;
+                font-weight: normal;
+                color: 000000;
+                margin: 0px;
+              ">
+              <%= narration %>
+            </p>
+          </td>
+
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 500;
+              color: 000000;
+              padding: 6px;
+              border-bottom: 1px solid #000;
+              border-top: 2px solid #000;
+            ">
+            Amount to Apply
+          </td>
+          <td
+            style="
+              font-size: 20px;
+              font-weight: 600;
+              color: 000000;
+              padding: 6px;
+              border-bottom: 1px solid #000;
+              border-top: 2px solid #000;
+              text-align: center;
+            ">
+            <%= amount %>
+          </td>
+        </tr>
+        <!-- <tr>
+          <td
+            style="
+              font-size: 16px;
+              font-weight: 500;
+              color: 000000;
+              padding: 6px;
+              border-bottom: 1px solid #000;
+            "
+          >
+            Amount To Credit
+          </td>
+          <td
+            style="
+              font-size: 20px;
+              font-weight: 600;
+              color: 000000;
+              padding: 6px;
+              border-bottom: 1px solid #000;
+              text-align: center;
+            "
+          >
+            ₹ 2000.00
+          </td>
+        </tr> -->
+        <tr>
+          <td
+            colspan="6"
+            style="
+              font-size: 16px;
+              font-weight: 500;
+              color: 000000;
+              padding: 5px;
+              border-bottom: 1px solid #000;
+            ">
+            Amount in Words:<span
+              style="
+                font-size: 16px;
+                font-weight: 600;
+                text-transform: capitalize;
+                padding-left: 10px;
+              ">
+              <%=netAmountInWord%></span
+            >
+          </td>
+        </tr>
+        <tr>
+          <td
+            colspan="6"
+            style="
+              font-size: 16px;
+              font-weight: 500;
+              color: 000000;
+              padding: 7px;
+              border-bottom: 1px solid #000;
+              text-align: right;
+            ">
+            For, Klamp Ecommerce LTD.
+            <h5
+              style="
+                font-size: 18px;
+                font-weight: 500;
+                color: 000000;
+                text-transform: capitalize;
+                margin: 15px 0px 15px 15px;
+              ">
+              signature
+            </h5>
+            <p
+              style="
+                font-size: 16px;
+                font-weight: normal;
+                color: 000000;
+                margin: 0px;
+              ">
+              Authorized Signatory
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

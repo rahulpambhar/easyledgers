@@ -1,0 +1,1943 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "./generated/child"
+  previewFeatures = ["fullTextSearch", "relationJoins"]
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Action {
+  INSERT
+  UPDATE
+  DELETE
+  CANCEL
+}
+
+enum parcentageType {
+  FIXED
+  PERCENTAGE
+}
+
+enum ExpenseType {
+  ROUNDOFF
+  DISCOUNT
+}
+
+enum TaxableType {
+  NA
+  EXEMPT
+  TAXABLE
+  NILL
+}
+
+enum numberMethod {
+  Automatic
+  Automatic_Manual
+  Manual
+}
+
+enum gstRegType {
+  Composition
+  Regular
+  Unregister
+  SEZ
+  EXPORTS
+  Ecommerce
+}
+
+enum typeOfSupply {
+  Goods
+  Service
+}
+
+enum methodAdjustmentType {
+  Advance
+  AgainstReference
+  NewReference
+  OnAccount
+}
+
+enum ledgerMode {
+  LEDGER
+  ACCOUNT
+  ACCOUNT_OPENING
+  STOCK_OPENING
+  STOCK_CLOSING
+  GST
+  DISCOUNT
+  ROUNDOFF
+  PARTICULAR
+  CONTRA
+  PAYMENT
+  RECEIPT
+  JV
+}
+
+enum txMode {
+  SALES_ORDER
+  DELIVERY_NOTE
+  SALES
+  PURCHASE_ORDER
+  RECEIPT_NOTE
+  PURCHASE
+  CREDIT
+  DEBIT
+  CONTRA
+  PAYMENT
+  RECEIPT
+  JOURNAL
+  NA
+}
+
+enum txType {
+  CR
+  DR
+}
+
+enum transportMode {
+  AIR
+  ROAD
+  RAIL
+  SHIP
+}
+
+enum invoiceType {
+  ITEM
+  ACCOUNT
+}
+
+model tcs {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  withoutPan   Decimal @default(0) @db.Decimal(19, 2)
+  withPan      Decimal @default(0) @db.Decimal(19, 2)
+  thresholdAmt Decimal @default(0) @db.Decimal(19, 2)
+
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  ledger ledger[] @relation("tcsLedger")
+
+  @@index([name])
+}
+
+model generalLedger {
+  id       Int            @id @default(autoincrement())
+  name     String
+  parent   Int?
+  parentGL generalLedger? @relation("parent", fields: [parent], references: [id])
+
+  isStatic      Boolean         @default(false)
+  isView        Boolean         @default(true)
+  isDelete      Boolean         @default(false)
+  createAt      DateTime        @default(now())
+  createBy      Int             @default(0)
+  updateAt      DateTime        @default(now())
+  updateBy      Int             @default(0)
+  Transaction   transaction[]
+  ledger        ledger[]
+  generalLedger generalLedger[] @relation("parent")
+
+  @@index([parent])
+  @@index([isDelete])
+  @@index([name, isDelete])
+}
+
+model ledger {
+  id Int @id @default(autoincrement())
+
+  glGroup generalLedger? @relation(fields: [glId], references: [id])
+  glId    Int?
+
+  name           String
+  email          String?
+  phoneNumber    String?
+  AltPhoneNumber String?
+
+  billingName String?
+  address     String?
+  state       String?
+  city        String?
+  pincode     Int?
+
+  openingBalance Decimal? @db.Decimal(19, 2)
+  openingType    txType?
+
+  closing Json?
+
+  dueDays  Int?
+  interest Decimal? @default(0) @db.Decimal(19, 2)
+
+  brokerage Decimal? @default(0) @db.Decimal(19, 2)
+  buyerType String?
+
+  isTcs Boolean @default(false)
+  tcsId Int?
+  tcs   tcs?    @relation("tcsLedger", fields: [tcsId], references: [id])
+
+  isTds   Boolean @default(false)
+  pancard String?
+  tdsPer  Decimal @default(0) @db.Decimal(19, 2)
+
+  gstRegType gstRegType? @default(Unregister)
+  gstNumber  String?
+
+  isGstApplicable Boolean       @default(false)
+  hsncode         String?
+  taxability      TaxableType   @default(NA)
+  igst            Decimal       @default(0) @db.Decimal(19, 2)
+  sgst            Decimal       @default(0) @db.Decimal(19, 2)
+  cgst            Decimal       @default(0) @db.Decimal(19, 2)
+  typeOfSupply    typeOfSupply?
+
+  isBankEnable      Boolean @default(false)
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  isTranspoter Boolean @default(false)
+
+  isStatic Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  ledgerTx         transaction[] @relation("ledger")
+  voucher          voucher[]     @relation("voucherBank")
+  ledgerSalesOrder SalesOrder[]  @relation("ledgerSalesOrder")
+  billToSalesOrder SalesOrder[]  @relation("billToSalesOrder")
+  shipToSalesOrder SalesOrder[]  @relation("shipToSalesOrder")
+  brokerSalesOrder SalesOrder[]  @relation("brokerSalesOrder")
+
+  ledgerDeliveryNote DeliveryNote[] @relation("ledgerDeliveryNote")
+  billToDeliveryNote DeliveryNote[] @relation("billToDeliveryNote")
+  shipToDeliveryNote DeliveryNote[] @relation("shipToDeliveryNote")
+  brokerDeliveryNote DeliveryNote[] @relation("brokerDeliveryNote")
+
+  ledgerSales Sales[] @relation("ledgerSales")
+  billToSales Sales[] @relation("billToSales")
+  shipToSales Sales[] @relation("shipToSales")
+  brokerSales Sales[] @relation("brokerSales")
+
+  ledgerSalesReturn SalesReturn[] @relation("ledgerSalesReturn")
+  billToSalesReturn SalesReturn[] @relation("billToSalesReturn")
+  shipToSalesReturn SalesReturn[] @relation("shipToSalesReturn")
+  brokerSalesReturn SalesReturn[] @relation("brokerSalesReturn")
+
+  ledgerPurchaseOrder PurchaseOrder[] @relation("ledgerPurchaseOrder")
+  billToPurchaseOrder PurchaseOrder[] @relation("billToPurchaseOrder")
+  shipToPurchaseOrder PurchaseOrder[] @relation("shipToPurchaseOrder")
+
+  ledgerReceiptNote ReceiptNote[] @relation("ledgerReceiptNote")
+  billToReceiptNote ReceiptNote[] @relation("billToReceiptNote")
+  shipToReceiptNote ReceiptNote[] @relation("shipToReceiptNote")
+
+  ledgerPurchase Purchase[] @relation("ledgerPurchase")
+  billToPurchase Purchase[] @relation("billToPurchase")
+  shipToPurchase Purchase[] @relation("shipToPurchase")
+
+  ledgerPurchaseReturn PurchaseReturn[] @relation("ledgerPurchaseReturn")
+  billToPurchaseReturn PurchaseReturn[] @relation("billToPurchaseReturn")
+  shipToPurchaseReturn PurchaseReturn[] @relation("shipToPurchaseReturn")
+
+  accountPayment    Payment[] @relation("accountPayment")
+  particularPayment Payment[] @relation("particularPayment")
+
+  accountReceipt    Receipt[] @relation("accountReceipt")
+  particularReceipt Receipt[] @relation("particularReceipt")
+
+  accountContra     Contra[] @relation("accountContra")
+  particularContrat Contra[] @relation("particularContra")
+
+  accountJV JVItems[] @relation("accountJV")
+
+  ledgerSummary ledgerSummary[]
+
+  @@index([id])
+  @@index([glId])
+  @@index([isDelete])
+  @@index([id, isDelete])
+}
+
+model ledgerSummary {
+  id Int @id @default(autoincrement())
+
+  ledger   ledger @relation(fields: [ledgerId], references: [id])
+  ledgerId Int
+
+  credit Decimal @default(0) @db.Decimal(19, 2)
+  debit  Decimal @default(0) @db.Decimal(19, 2)
+
+  closing         Decimal @default(0) @db.Decimal(19, 2)
+  transferClosing Decimal @default(0) @db.Decimal(19, 2)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  @@unique([ledgerId])
+  @@index([ledgerId])
+}
+
+model voucher {
+  id            Int      @id @default(autoincrement())
+  name          String
+  parent        Int?
+  parentVoucher voucher? @relation("parentVoucher", fields: [parent], references: [id])
+
+  numberMethod numberMethod
+  duplicate    Boolean      @default(false)
+  prefix       String?
+  isBank       Boolean      @default(false)
+
+  bankLedgerId Int?
+  bankLedger   ledger? @relation("voucherBank", fields: [bankLedgerId], references: [id])
+
+  isDefault Boolean @default(false)
+  isDelete  Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  salesOrder   SalesOrder[]   @relation("voucherSalesOrder")
+  deliveryNote DeliveryNote[] @relation("voucherDeliveryNote")
+  sales        Sales[]        @relation("voucherSales")
+  salesReturn  SalesReturn[]  @relation("voucherSalesReturn")
+
+  purchaseOrder  PurchaseOrder[]  @relation("voucherPurchaseOrder")
+  receiptNote    ReceiptNote[]    @relation("voucherReceiptNote")
+  purchase       Purchase[]       @relation("voucherPurchase")
+  purchaseReturn PurchaseReturn[] @relation("voucherPurchaseReturn")
+
+  vouchers    voucher[]     @relation("parentVoucher")
+  transaction transaction[] @relation("voucher")
+
+  Payment        Payment[]        @relation("voucherPayment")
+  Receipt        Receipt[]        @relation("voucherReceipt")
+  Contra         Contra[]         @relation("voucherContra")
+  JournalVoucher JournalVoucher[] @relation("voucherJV")
+
+  @@index([id])
+  @@index([parent])
+  @@index([isBank])
+  @@index([bankLedgerId])
+}
+
+model hsn {
+  id          Int     @id @default(autoincrement())
+  code        String
+  description String
+  igst        Decimal @default(0) @db.Decimal(19, 2)
+  cgst        Decimal @default(0) @db.Decimal(19, 2)
+  sgst        Decimal @default(0) @db.Decimal(19, 2)
+  isDelete    Boolean @default(false)
+
+  createAt  DateTime  @default(now())
+  createdBy Int       @default(0)
+  updateAt  DateTime  @default(now()) @updatedAt
+  updateBy  Int       @default(0)
+  product   product[]
+
+  @@index([code])
+  @@index([code, isDelete])
+}
+
+model uom {
+  id            Int     @id @default(autoincrement())
+  name          String
+  shortname     String
+  decimalNumber Int
+  isDelete      Boolean @default(false)
+
+  createAt  DateTime  @default(now())
+  createdBy Int       @default(0)
+  updateAt  DateTime  @default(now()) @updatedAt
+  updateBy  Int       @default(0)
+  product   product[]
+}
+
+model productGroup {
+  id       Int      @id @default(autoincrement())
+  name     String
+  isDelete Boolean  @default(false)
+  createAt DateTime @default(now())
+  createBy Int
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  products product[]
+
+  @@index([id])
+}
+
+model product {
+  id Int @id @default(autoincrement())
+
+  group   productGroup? @relation(fields: [groupId], references: [id])
+  groupId Int?
+
+  name  String
+  sku   String
+  uom   uom    @relation(fields: [uomId], references: [id])
+  uomId Int
+
+  hsn   hsn @relation(fields: [hsnId], references: [id])
+  hsnId Int
+
+  type typeOfSupply? @default(Goods)
+
+  isManageSales Boolean @default(false)
+  saleRate      Decimal @db.Decimal(19, 2)
+  saleMinQty    Int     @default(0)
+  saleMaxQty    Int     @default(0)
+
+  isManagePurchase Boolean @default(false)
+  purchaseRate     Decimal @db.Decimal(19, 2)
+  purchaseMinQty   Int     @default(0)
+  purchaseMaxQty   Int     @default(0)
+
+  StockQty    Decimal @default(0) @db.Decimal(19, 4)
+  PerQtyRate  Decimal @default(0) @db.Decimal(19, 2)
+  StockAmount Decimal @default(0) @db.Decimal(19, 2)
+
+  isNonGst   Boolean     @default(false)
+  taxability TaxableType @default(NA)
+  igst       Decimal     @default(0) @db.Decimal(19, 2)
+  cgst       Decimal     @default(0) @db.Decimal(19, 2)
+  sgst       Decimal     @default(0) @db.Decimal(19, 2)
+  cess       Decimal     @default(0) @db.Decimal(19, 2)
+  createAt   DateTime    @default(now())
+  createBy   Int         @default(0)
+  isDelete   Boolean     @default(false)
+  updateAt   DateTime    @updatedAt
+  updateBy   Int         @default(0)
+  stock      stock[]
+
+  @@index([id])
+}
+
+model stock {
+  id Int @id @default(autoincrement())
+
+  product   product @relation(fields: [productId], references: [id])
+  productId Int
+
+  currentQty    Decimal
+  currentAmount Decimal @db.Decimal(19, 2)
+
+  transferedQty    Decimal @default(0)
+  transferedAmount Decimal @db.Decimal(19, 2)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  isDelete Boolean  @default(false)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+}
+
+model billTerm {
+  id       Int     @id @default(autoincrement())
+  name     String
+  term     String
+  isDelete Boolean @default(false)
+
+  createAt  DateTime @default(now())
+  createdBy Int      @default(0)
+  updateAt  DateTime @default(now()) @updatedAt
+  updateBy  Int      @default(0)
+
+  @@index([name])
+  @@index([name, isDelete])
+}
+
+model warehouse {
+  id             Int     @id @default(autoincrement())
+  name           String
+  address        String
+  pincode        Int
+  state          String
+  city           String
+  area           String
+  phoneNumber    String
+  AltPhoneNumber String
+  email          String
+  isDelete       Boolean @default(false)
+
+  createAt  DateTime @default(now())
+  createdBy Int      @default(0)
+  updateAt  DateTime @default(now()) @updatedAt
+  updateBy  Int      @default(0)
+
+  salesOrder   SalesOrder[]   @relation("warehouseSalesOrder")
+  deliveryNote DeliveryNote[] @relation("warehouseDeliveryNote")
+  Sales        Sales[]        @relation("warehouseSales")
+  SalesReturn  SalesReturn[]  @relation("warehouseSalesReturn")
+
+  purchaseOrder           PurchaseOrder[]  @relation("warehousePurchaseOrder")
+  receiptNote             ReceiptNote[]    @relation("warehouseReceiptNote")
+  warehousePurchase       Purchase[]       @relation("warehousePurchase")
+  warehousePurchaseReturn PurchaseReturn[] @relation("warehousePurchaseReturn")
+
+  @@index([name])
+  @@index([name, isDelete])
+}
+
+model transport {
+  id             Int     @id @default(autoincrement())
+  name           String
+  phoneNumber    String
+  AltPhoneNumber String
+  address        String
+  pincode        String
+  state          String
+  city           String
+  country        String
+  gstNo          String
+  isDelete       Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  salesOrder   SalesOrder[]   @relation("transportSalesOrder")
+  deliveryNote DeliveryNote[] @relation("transportDeliveryNote")
+  sales        Sales[]        @relation("transportSales")
+  SalesReturn  SalesReturn[]  @relation("transportSalesReturn")
+
+  purchaseOrder           PurchaseOrder[]  @relation("transportPurchaseOrder")
+  receiptNote             ReceiptNote[]    @relation("transportReceiptNote")
+  transportPurchase       Purchase[]       @relation("transportPurchase")
+  transportPurchaseReturn PurchaseReturn[] @relation("transportPurchaseReturn")
+
+  @@index([name])
+  @@index([name, isDelete])
+}
+
+model SalesOrder {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherSalesOrder", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerSalesOrder", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToSalesOrder", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToSalesOrder", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportSalesOrder", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehouseSalesOrder", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  brokerId  Int?
+  broker    ledger?  @relation("brokerSalesOrder", fields: [brokerId], references: [id])
+  brokerage Decimal? @default(0) @db.Decimal(19, 2)
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  isCancel   Boolean @default(false)
+  isDelete   Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items             SalesOrderItem[]
+  DeliveryNoteItems DeliveryNoteItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model SalesOrderItem {
+  id                    Int             @id @default(autoincrement())
+  salesOrder            SalesOrder      @relation(fields: [salesOrderId], references: [id])
+  salesOrderId          Int
+  invoiceDate           DateTime        @db.Date
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float?
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([salesOrderId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isCancel])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model DeliveryNote {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherDeliveryNote", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerDeliveryNote", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToDeliveryNote", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToDeliveryNote", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportDeliveryNote", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehouseDeliveryNote", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  brokerId  Int?
+  broker    ledger?  @relation("brokerDeliveryNote", fields: [brokerId], references: [id])
+  brokerage Decimal? @default(0) @db.Decimal(19, 2)
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+
+  isCancel Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items      DeliveryNoteItems[]
+  SalesItems SalesItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model DeliveryNoteItems {
+  id                    Int             @id @default(autoincrement())
+  deliveryNote          DeliveryNote    @relation(fields: [deliveryNoteId], references: [id])
+  deliveryNoteId        Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float           @default(0)
+  remainQty             Float           @default(0)
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  salesOrderId          Int?
+  salesOrder            SalesOrder?     @relation(fields: [salesOrderId], references: [id])
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([deliveryNoteId])
+  @@index([remainQty])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model Sales {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherSales", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerSales", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToSales", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToSales", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportSales", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehouseSales", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  tcsLedgerId Int     @default(0)
+  tcsAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  brokerId  Int?
+  broker    ledger?  @relation("brokerSales", fields: [brokerId], references: [id])
+  brokerage Decimal? @default(0) @db.Decimal(19, 2)
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+
+  outstanding Decimal @default(0) @db.Decimal(19, 2)
+
+  isCancel Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items            SalesItems[]
+  receiptAgainst   receiptAgainst[]
+  SalesReturnItems SalesReturnItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model SalesItems {
+  id                    Int             @id @default(autoincrement())
+  sales                 Sales           @relation(fields: [salesId], references: [id])
+  salesId               Int
+  invoiceDate           DateTime        @db.Date
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float           @default(0)
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  deliveryNoteId        Int?
+  deliveryNote          DeliveryNote?   @relation(fields: [deliveryNoteId], references: [id])
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([salesId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model SalesReturn {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherSalesReturn", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerSalesReturn", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToSalesReturn", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToSalesReturn", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportSalesReturn", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehouseSalesReturn", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  brokerId  Int?
+  broker    ledger?  @relation("brokerSalesReturn", fields: [brokerId], references: [id])
+  brokerage Decimal? @default(0) @db.Decimal(19, 2)
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+
+  isCancel Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items SalesReturnItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model SalesReturnItems {
+  id                    Int             @id @default(autoincrement())
+  salesReturn           SalesReturn     @relation(fields: [salesReturnId], references: [id])
+  salesReturnId         Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float           @default(0)
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  salesId               Int?
+  sales                 Sales?          @relation(fields: [salesId], references: [id])
+  isAdditional          Boolean         @default(false)
+  isExpense             Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([salesReturnId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model PurchaseOrder {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherPurchaseOrder", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerPurchaseOrder", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToPurchaseOrder", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToPurchaseOrder", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportPurchaseOrder", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehousePurchaseOrder", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  isCancel   Boolean @default(false)
+  isDelete   Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items            PurchaseOrderItems[]
+  ReceiptNoteItems ReceiptNoteItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model PurchaseOrderItems {
+  id                    Int             @id @default(autoincrement())
+  purchaseOrder         PurchaseOrder   @relation(fields: [purchaseOrderId], references: [id])
+  purchaseOrderId       Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float?
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  refId                 Int?            @default(0)
+  isAdditional          Boolean         @default(false)
+  isExpense             Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([purchaseOrderId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model ReceiptNote {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherReceiptNote", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerReceiptNote", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToReceiptNote", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToReceiptNote", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportReceiptNote", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehouseReceiptNote", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+
+  isCancel Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items         ReceiptNoteItems[]
+  PurchaseItems PurchaseItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model ReceiptNoteItems {
+  id                    Int             @id @default(autoincrement())
+  receiptNote           ReceiptNote     @relation(fields: [receiptNoteId], references: [id])
+  receiptNoteId         Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float           @default(0)
+  remainQty             Float           @default(0)
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  purchaseOrderId       Int?
+  purchaseOrder         PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([receiptNoteId])
+  @@index([remainQty])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isCancel])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model Purchase {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherPurchase", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerPurchase", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToPurchase", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToPurchase", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportPurchase", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehousePurchase", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+
+  outstanding Decimal @default(0) @db.Decimal(19, 2)
+
+  isCancel Boolean @default(false)
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items               PurchaseItems[]
+  paymentAgainst      paymentAgainst[]
+  PurchaseReturnItems PurchaseReturnItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model PurchaseItems {
+  id                    Int             @id @default(autoincrement())
+  purchase              Purchase        @relation(fields: [purchaseId], references: [id])
+  purchaseId            Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float?
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  receiptNoteId         Int?
+  receiptNote           ReceiptNote?    @relation(fields: [receiptNoteId], references: [id])
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([purchaseId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isCancel])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model PurchaseReturn {
+  id Int @id @default(autoincrement())
+
+  invoiceType invoiceType
+  voucherId   Int
+  voucher     voucher     @relation("voucherPurchaseReturn", fields: [voucherId], references: [id])
+
+  invoiceNo   String
+  invoiceDate DateTime @db.Date()
+
+  ledgerId Int?
+  ledger   ledger? @relation("ledgerPurchaseReturn", fields: [ledgerId], references: [id])
+
+  billToId        Int
+  billTo          ledger  @relation("billToPurchaseReturn", fields: [billToId], references: [id])
+  billToName      String
+  billToAddress   String
+  billToState     String
+  billToCity      String
+  billToPincode   String
+  billTogstNumber String?
+
+  shipToId        Int
+  shipTo          ledger  @relation("shipToPurchaseReturn", fields: [shipToId], references: [id])
+  shipToName      String
+  shipToAddress   String
+  shipToState     String
+  shipToCity      String
+  shipToPincode   String
+  shipTogstNumber String?
+
+  transportId   Int?
+  transport     transport?     @relation("transportPurchaseReturn", fields: [transportId], references: [id])
+  transportMode transportMode?
+
+  warehouseId Int?
+  warehouse   warehouse? @relation("warehousePurchaseReturn", fields: [warehouseId], references: [id])
+
+  taxableAmount Decimal @db.Decimal(19, 2)
+
+  igstLedgerId Int
+  igstAmount   Decimal @db.Decimal(19, 2)
+  cgstLedgerId Int
+  cgstAmount   Decimal @db.Decimal(19, 2)
+  sgstLedgerId Int
+  sgstAmount   Decimal @db.Decimal(19, 2)
+  cessLedgerId Int     @default(0)
+  cessAmount   Decimal @default(0) @db.Decimal(19, 2)
+
+  discountLedgerId   Int?
+  discountPercentage Decimal?        @default(0) @db.Decimal(19, 2)
+  discountAmount     Decimal?        @default(0) @db.Decimal(19, 2)
+  discountType       parcentageType?
+
+  roundOffLedgerId Int?
+  roundOffAmount   Decimal? @default(0) @db.Decimal(19, 2)
+
+  netAmount  Decimal     @db.Decimal(19, 2)
+  taxability TaxableType
+
+  vehicleNo String?
+  narration String?
+  lrNo      String?
+  lrDate    DateTime? @db.Date()
+
+  dueDays Int?
+  dueDate DateTime? @db.Date()
+
+  bankAccHolderName String?
+  bankName          String?
+  branchName        String?
+  bankAccNo         String?
+  bankIfsc          String?
+  bankSwiftCode     String?
+
+  terms      String?
+  attachment String?
+  reference  Int[]
+  isCancel   Boolean @default(false)
+  isDelete   Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  items PurchaseReturnItems[]
+
+  @@index([invoiceNo])
+  @@index([ledgerId])
+  @@index([invoiceDate])
+}
+
+model PurchaseReturnItems {
+  id                    Int             @id @default(autoincrement())
+  purchaseReturn        PurchaseReturn  @relation(fields: [purchaseReturnId], references: [id])
+  purchaseReturnId      Int
+  invoiceDate           DateTime        @db.Date()
+  taxableType           TaxableType
+  itemId                Int?
+  hsn                   String?
+  uom                   String?
+  qty                   Float?
+  rateType              parcentageType?
+  rate                  Decimal         @default(0) @db.Decimal(19, 2)
+  total                 Decimal         @default(0) @db.Decimal(19, 2)
+  igst                  Decimal         @default(0) @db.Decimal(19, 2)
+  igstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  sgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  sgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cgst                  Decimal         @default(0) @db.Decimal(19, 2)
+  cgstAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  cess                  Decimal         @default(0) @db.Decimal(19, 2)
+  cessAmount            Decimal         @default(0) @db.Decimal(19, 2)
+  discount              Decimal         @default(0) @db.Decimal(19, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(19, 2)
+  discountType          parcentageType?
+  isInvoiceDiscount     Boolean         @default(false)
+  invoiceDiscount       Decimal         @default(0) @db.Decimal(19, 2)
+  invoiceDiscountAmount Decimal         @default(0) @db.Decimal(19, 2)
+  taxableAmount         Decimal         @default(0) @db.Decimal(19, 2)
+  remark                String?
+  purchaseId            Int?
+  purchase              Purchase?       @relation(fields: [purchaseId], references: [id])
+  isExpense             Boolean         @default(false)
+  isAdditional          Boolean         @default(false)
+  isCancel              Boolean         @default(false)
+  isDelete              Boolean         @default(false)
+  createAt              DateTime        @default(now())
+  createBy              Int             @default(0)
+  updateAt              DateTime        @updatedAt
+  updateBy              Int             @default(0)
+
+  @@index([purchaseReturnId])
+  @@index([invoiceDate])
+  @@index([isExpense])
+  @@index([isDelete, isCancel])
+  @@index([isDelete, isExpense, isCancel, invoiceDate])
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  voucherId Int
+  voucher   voucher @relation("voucherPayment", fields: [voucherId], references: [id])
+
+  invoiceNo String
+
+  accId   Int
+  account ledger @relation("accountPayment", fields: [accId], references: [id])
+
+  particularId Int
+  particular   ledger @relation("particularPayment", fields: [particularId], references: [id])
+
+  date                 DateTime             @db.Date
+  amount               Decimal              @default(0) @db.Decimal(19, 2)
+  methodAdjustmentType methodAdjustmentType
+  referenceNo          String?
+  referenceMode        String?
+  referenceDate        DateTime?            @db.Date
+
+  narration      String?
+  attachment     String?
+  reconciliation DateTime?
+  isDelete       Boolean   @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+
+  paymentAgainst paymentAgainst[]
+}
+
+model paymentAgainst {
+  id Int @id @default(autoincrement())
+
+  parent   Payment @relation(fields: [parentId], references: [id])
+  parentId Int
+
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  purchaseId Int
+
+  particularId   Int
+  particularName String
+  date           DateTime @db.Date
+
+  netAmount Decimal @default(0) @db.Decimal(19, 2)
+  dueAmount Decimal @default(0) @db.Decimal(19, 2)
+  amount    Decimal @default(0) @db.Decimal(19, 2)
+
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+}
+
+model Receipt {
+  id Int @id @default(autoincrement())
+
+  voucherId Int
+  voucher   voucher @relation("voucherReceipt", fields: [voucherId], references: [id])
+
+  invoiceNo String
+
+  accId   Int
+  account ledger @relation("accountReceipt", fields: [accId], references: [id])
+
+  particularId Int
+  particular   ledger @relation("particularReceipt", fields: [particularId], references: [id])
+
+  date                 DateTime             @db.Date
+  amount               Decimal              @default(0) @db.Decimal(19, 2)
+  methodAdjustmentType methodAdjustmentType
+  referenceNo          String?
+  referenceMode        String?
+  referenceDate        DateTime?            @db.Date
+
+  narration      String?
+  attachment     String?
+  reconciliation DateTime?
+  isDelete       Boolean   @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+
+  receiptAgainst receiptAgainst[]
+}
+
+model receiptAgainst {
+  id Int @id @default(autoincrement())
+
+  parent   Receipt @relation(fields: [parentId], references: [id])
+  parentId Int
+
+  sales   Sales @relation(fields: [salesId], references: [id])
+  salesId Int
+
+  particularId   Int
+  particularName String
+  date           DateTime @db.Date
+
+  netAmount Decimal @default(0) @db.Decimal(19, 2)
+  dueAmount Decimal @default(0) @db.Decimal(19, 2)
+  amount    Decimal @default(0) @db.Decimal(19, 2)
+
+  isDelete Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+}
+
+model Contra {
+  id Int @id @default(autoincrement())
+
+  voucherId Int
+  voucher   voucher @relation("voucherContra", fields: [voucherId], references: [id])
+
+  invoiceNo String
+
+  accId   Int
+  account ledger @relation("accountContra", fields: [accId], references: [id])
+
+  particularId Int
+  particular   ledger @relation("particularContra", fields: [particularId], references: [id])
+
+  date          DateTime  @db.Date
+  amount        Decimal   @default(0) @db.Decimal(19, 2)
+  referenceNo   String?
+  referenceMode String?
+  referenceDate DateTime? @db.Date
+
+  narration      String?
+  attachment     String?
+  reconciliation DateTime?
+  isDelete       Boolean   @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+}
+
+model JournalVoucher {
+  id Int @id @default(autoincrement())
+
+  voucher   voucher @relation("voucherJV", fields: [voucherId], references: [id])
+  voucherId Int
+
+  invoiceNo String
+  date      DateTime @db.Date
+
+  narration  String?
+  attachment String?
+
+  isDelete Boolean @default(false)
+
+  items JVItems[]
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+
+  @@index([id])
+  @@index([voucherId])
+}
+
+model JVItems {
+  id Int @id @default(autoincrement())
+
+  jvId           Int
+  JournalVoucher JournalVoucher @relation(fields: [jvId], references: [id])
+
+  accId   Int
+  account ledger @relation("accountJV", fields: [accId], references: [id])
+
+  txType               txType?
+  amount               Decimal               @default(0) @db.Decimal(19, 2)
+  methodAdjustmentType methodAdjustmentType?
+
+  reference Json?
+
+  isDelete Boolean  @default(false)
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @updatedAt
+  updateBy Int      @default(0)
+
+  @@index([id])
+  @@index([accId])
+  @@index([jvId])
+}
+
+model transaction {
+  id Int @id @default(autoincrement())
+
+  txMode txMode @default(NA)
+
+  voucher   voucher? @relation("voucher", fields: [voucherId], references: [id])
+  voucherId Int?     @default(0)
+
+  ledger   ledger @relation("ledger", fields: [ledgerId], references: [id])
+  ledgerId Int
+
+  group   generalLedger @relation(fields: [groupId], references: [id])
+  groupId Int
+
+  refId Int @default(0)
+
+  ledgerMode ledgerMode
+  date       DateTime   @db.Date
+  amount     Decimal    @default(0) @db.Decimal(19, 2)
+  txType     txType
+
+  isDelete         Boolean @default(false)
+  isInvoicePending Boolean @default(false)
+
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+  updateAt DateTime @default(now()) @updatedAt
+  updateBy Int      @default(0)
+
+  @@index([txMode, refId, ledgerId, isDelete])
+  @@index([txMode, refId, isDelete])
+  @@index([ledgerMode, groupId, date, isDelete])
+  @@index([ledgerMode, ledgerId, date, isDelete])
+  @@index([voucherId])
+  @@index([ledgerId])
+  @@index([groupId])
+  @@index([refId])
+  @@index([ledgerMode])
+  @@index([txType])
+  @@index([txMode])
+}
+
+model activityLog {
+  id       Int      @id @default(autoincrement())
+  action   Action
+  table    String
+  body     Json
+  createAt DateTime @default(now())
+  createBy Int      @default(0)
+
+  @@index([action])
+  @@index([createBy])
+}
